@@ -1,0 +1,40 @@
+WebMvcConfigurationSupport 
+	启动时初始化默认配置
+		servletContext
+		interceptors
+		pathMatchConfigurer
+		contentNegotiationManager
+		argumentResolvers 	参数处理器
+		returnValueHandlers 返回值处理器
+		messageConverters	消息转换器
+		corsConfigurations
+		
+
+
+HandlerAdapter  ------ >RequestMappingHandlerAdapter   
+		boolean supports(Object handler);
+		ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception;
+		|关键代码	
+		|	ServletInvocableHandlerMethod invocableMethod = createInvocableHandlerMethod(handlerMethod);
+		|	invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+		|	invocableMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+		|	invocableMethod.setDataBinderFactory(binderFactory);
+		|	invocableMethod.setParameterNameDiscoverer(this.parameterNameDiscoverer);
+		|
+		|
+		|
+		HandlerMethod   ------>ServletInvocableHandlerMethod
+					void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer,
+										Object... providedArgs)
+					|
+					|执行Controller的业务方法，并且返回值	
+					|	Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+					|处理返回值
+					|	this.returnValueHandlers.handleReturnValue(returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
+					|
+					|
+					|					
+					|
+					HandlerMethodReturnValueHandler -------->ResponseBodyEmitterReturnValueHandler
+								handleReturnValue(Object returnValue, MethodParameter returnType,
+													ModelAndViewContainer mavContainer, NativeWebRequest webRequest)
