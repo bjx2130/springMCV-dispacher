@@ -44,8 +44,8 @@ HandlerAdapter  ------ > 以下三个HandlerAdapter都是在WebMvcConfigurationS
 
 
 DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport 
-	自定义配置类继承WebMvcConfigurerAdapter(WebMvcConfigurer的子类)
-		在启动时会调用类DelegatingWebMvcConfiguration.setConfigurers(List<WebMvcConfigurer> configurers)方法注入
+	自定义配置类需要继承WebMvcConfigurerAdapter(WebMvcConfigurer的子类)，类上在添加配置注解@Configuration
+	在启动时会调用类DelegatingWebMvcConfiguration.setConfigurers(List<WebMvcConfigurer> configurers)方法注入自定义配置类
 		
 	
 	
