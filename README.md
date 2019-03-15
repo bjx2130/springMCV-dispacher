@@ -1,2 +1,137 @@
 # springMCV-dispacher
 springMCV核心类学习
+
+
+HandlerAdapter  ------ > 以下三个HandlerAdapter都是在WebMvcConfigurationSupport中创建
+		|
+		|HttpRequestHandlerAdapter(HTTP请求处理器适配器)
+		|		实现HttpRequestHandler接口，并实现其void handlerRequest(HttpRequest,HttpResponse)方法，
+		|		该方法没有返回值。
+        |
+		|SimpleControllerHandlerAdapter(简单控制器处理器适配器)
+		|		实现Controller接口，并实现其ModelAndView handler(HttpRequest,HttpResponse,handler)方法，
+		|		该方法返回ModelAndView对象，用于后续的模板渲染。
+		|
+		|RequestMappingHandlerAdapter(@RequestMapping注解适配器)   
+				boolean supports(Object handler);
+				ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception;
+					|关键代码	
+					|	ServletInvocableHandlerMethod invocableMethod = createInvocableHandlerMethod(handlerMethod);
+					|	设置参数解析器
+					|	invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+					|	设置返回值处理器
+					|	invocableMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);								|	
+					|	invocableMethod.setDataBinderFactory(binderFactory);
+					|	invocableMethod.setParameterNameDiscoverer(this.parameterNameDiscoverer);
+					|
+					|
+					|
+					HandlerMethod   ------>ServletInvocableHandlerMethod
+								void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer,
+													Object... providedArgs)
+								|
+								|执行Controller的业务方法，并且返回值	
+								|	Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+								|处理返回值
+								|	this.returnValueHandlers.handleReturnValue(returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
+								|
+								|
+								|					
+								|
+								HandlerMethodReturnValueHandler -------->ResponseBodyEmitterReturnValueHandler
+											handleReturnValue(Object returnValue, MethodParameter returnType,
+																ModelAndViewContainer mavContainer, NativeWebRequest webRequest)
+
+
+
+----------------------------------------------------------------------------------------------------------------------	
+
+
+DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport 
+	自定义配置类继承WebMvcConfigurerAdapter(WebMvcConfigurer的子类)
+		在启动时会调用类DelegatingWebMvcConfiguration.setConfigurers(List<WebMvcConfigurer> configurers)方法注入
+		
+	
+	
+	@EnableWebMvc启动时初始化默认配置
+		servletContext
+		interceptors
+		pathMatchConfigurer
+		contentNegotiationManager
+		corsConfigurations
+		messageConverters	消息转换器	  初始化消息转换器： 
+								|//RequestMappingHandlerAdapter默认也注入了以下四个HttpMessageConverter
+								|new ByteArrayHttpMessageConverter()
+								|new StringHttpMessageConverter()
+								|new ResourceHttpMessageConverter()
+								|new SourceHttpMessageConverter<Source>()
+								|new AllEncompassingFormHttpMessageConverter()
+								|
+								|//ConditionalOnClass
+								|new AtomFeedHttpMessageConverter()
+								|new RssChannelHttpMessageConverter()
+								|new MappingJackson2XmlHttpMessageConverter(.....)
+								|new Jaxb2RootElementHttpMessageConverter()
+								|new MappingJackson2HttpMessageConverter(.....)
+								|new GsonHttpMessageConverter()		
+		argumentResolvers 	参数处理器	  初始化参数处理器：RequestMappingHandlerAdapter.getDefaultArgumentResolvers()方法中初始化
+								|// Annotation-based argument resolution
+								|new RequestParamMethodArgumentResolver(getBeanFactory(), false)
+								|new RequestParamMapMethodArgumentResolver()
+								|new PathVariableMethodArgumentResolver()
+								|new PathVariableMapMethodArgumentResolver()
+								|new MatrixVariableMethodArgumentResolver()
+								|new MatrixVariableMapMethodArgumentResolver()
+								|new ServletModelAttributeMethodProcessor(false)
+								|new RequestResponseBodyMethodProcessor(getMessageConverters(), this.requestResponseBodyAdvice)
+								|new RequestPartMethodArgumentResolver(getMessageConverters(), this.requestResponseBodyAdvice)
+								|new RequestHeaderMethodArgumentResolver(getBeanFactory())
+								|new RequestHeaderMapMethodArgumentResolver()
+								|new ServletCookieValueMethodArgumentResolver(getBeanFactory())
+								|new ExpressionValueMethodArgumentResolver(getBeanFactory())
+								|new SessionAttributeMethodArgumentResolver()
+								|new RequestAttributeMethodArgumentResolver()
+								|
+								|// Type-based argument resolution
+								|new ServletRequestMethodArgumentResolver()
+								|new ServletResponseMethodArgumentResolver()
+								|new HttpEntityMethodProcessor(getMessageConverters(), this.requestResponseBodyAdvice)
+								|new RedirectAttributesMethodArgumentResolver()
+								|new ModelMethodProcessor()
+								|new MapMethodProcessor()
+								|new ErrorsMethodArgumentResolver()
+								|new SessionStatusMethodArgumentResolver()
+								|new UriComponentsBuilderMethodArgumentResolver()
+								|
+								|// Custom arguments
+								|if (getCustomArgumentResolvers() != null) {
+								|	resolvers.addAll(getCustomArgumentResolvers()
+								}
+		returnValueHandlers 返回值处理器  初始化返回值处理器：RequestMappingHandlerAdapter.getDefaultReturnValueHandlers()方法中初始化
+								|// Single-purpose return value types
+								|handlers.add(new ModelAndViewMethodReturnValueHandler()
+								|handlers.add(new ModelMethodProcessor()
+								|handlers.add(new ViewMethodReturnValueHandler()
+								|handlers.add(new ResponseBodyEmitterReturnValueHandler(getMessageConverters())
+								|handlers.add(new StreamingResponseBodyReturnValueHandler()
+								|handlers.add(new HttpEntityMethodProcessor(getMessageConverters(),
+								|		this.contentNegotiationManager, this.requestResponseBodyAdvice)
+								|handlers.add(new HttpHeadersReturnValueHandler()
+								|handlers.add(new CallableMethodReturnValueHandler()
+								|handlers.add(new DeferredResultMethodReturnValueHandler()
+								|handlers.add(new AsyncTaskMethodReturnValueHandler(this.beanFactory)
+								|
+								|// Annotation-based return value types
+								|handlers.add(new ModelAttributeMethodProcessor(false)
+								|handlers.add(new RequestResponseBodyMethodProcessor(getMessageConverters(),
+								|		this.contentNegotiationManager, this.requestResponseBodyAdvice)
+								|
+								|// Multi-purpose return value types
+								|handlers.add(new ViewNameMethodReturnValueHandler()
+								|handlers.add(new MapMethodProcessor()
+								|
+								|// Custom return value types
+								|if (getCustomReturnValueHandlers() != null) {
+								|	handlers.addAll(getCustomReturnValueHandlers());
+								|}
+											
